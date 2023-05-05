@@ -1,0 +1,69 @@
+---
+title: "T-Mobile Homeruns"
+author: "Evan Howard"
+date: "2023-05-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(baseballr)
+library(dplyr)
+library(ggpubr)
+library(formattable)
+library(reshape)
+
+SEA <- read.csv("SEAballparkHR.csv")
+```
+
+
+```{r}
+summary(cars)
+x <- c(-.8, 1.2, 1.2, -.8, -.8)
+z <- c(1.5, 1.5, 3.5, 3.5, 1.5)
+sz <- tibble(x, z)
+
+#visualizing pitch spray chart of all HR @ SEA with pitch_name
+SEAstrikezone <- ggplot()+
+  geom_path(data = sz, aes(x = x, y = z))+
+  coord_equal()+
+  labs(title = "HR at T-Mobile by Pitch Type")+
+  xlab("Width of Home Plate")+
+  ylab("Feet Above the Ground")+
+  geom_point(data = SEA, aes(x = plate_x,y = plate_z, color=pitch_name))+
+  scale_size(range = c(0.01, 3))
+
+SEAstrikezone
+```
+
+Above is the strikezone plot of all the homeruns from our data file by pitch type.
+
+
+```{r}
+custom_color_scale <- scale_fill_gradientn(
+  colors = c("#FBFBF9", "#0A1172","#3944BC", "#FF2800"),
+  values = c(0, 0.3, .5, 1),
+  guide = "colorbar"
+)
+
+#plotting heat map for HR in seattle
+heatmapSEA <- ggplot(SEA, aes(x = plate_x, y = plate_z))+
+  stat_density2d(geom = "tile", aes(fill = after_stat(density)), contour = FALSE)+
+  custom_color_scale+
+  geom_polygon(data = sz, aes(x, z), color = 'black', fill = NA)+
+  theme_minimal()+
+ xlab("Position on Home Plate")+
+  ylab("Feet Above Ground")+
+  labs(title = "Heatmap of HR at T-Mobile")
+
+heatmapSEA
+```
+
+Above is the heatmap to see the density of HR in relation to where they're located
+in the strikezone at T-Mobile.
+
+```{r}
+ggarrange(SEAstrikezone, heatmapSEA)
+```
+Here are the two plots side by side. 
