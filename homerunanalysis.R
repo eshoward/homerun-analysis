@@ -1,9 +1,11 @@
 install.packages("formattable")
 install.packages("reshape")
+install.packages('ggpubr') 
+
 library(tidyverse)
 library(baseballr)
-library(pitchRx)
 library(dplyr)
+library(ggpubr)
 library(formattable)
 library(reshape)
 
@@ -17,42 +19,42 @@ SEA <- ballpark %>%
 #getting rid of NA columns in Seattle ballpark variable
 SEA <- SEA[colSums(!is.na(SEA)) > 0]
 
+
+#writing SEA data to separate csv
+write.csv(SEA, "SEAballparkHR.csv", row.names = F)
+
 SEA %>%  distinct(pitch_name)
 
 #used to create strike zone
-x <- c(-.95, .95, .95, -.95, -.95)
-z <- c(1.6, 1.6, 3.5, 3.5, 1.6)
+x <- c(-.8, 1.2, 1.2, -.8, -.8)
+z <- c(1.5, 1.5, 3.5, 3.5, 1.5)
 sz <- tibble(x, z)
 
 #visualizing pitch spray chart of all HR @ SEA with pitch_name
-ggplot()+
+SEAstrikezone <- ggplot()+
   geom_path(data = sz, aes(x = x, y = z))+
   coord_equal()+
+  labs(title = "HR at T-Mobile by Pitch Type")+
   xlab("Width of Home Plate")+
   ylab("Feet Above the Ground")+
   geom_point(data = SEA, aes(x = plate_x,y = plate_z, color=pitch_name))+
   scale_size(range = c(0.01, 3))
 
-#creating strike zone. Below is trying to create heatmap.
-topKzone <- 3.5
-botKzone <- 1.6
-inKzone <- -0.95
-outKzone <- 0.95
+#creating custom color scale
+custom_color_scale <- scale_fill_gradientn(
+  colors = c("#FBFBF9", "#0A1172","#3944BC", "#FF2800"),
+  values = c(0, 0.3, .5, 1),
+  guide = "colorbar"
+)
 
-kZone <- tibble(
-    x = c(inKzone, inKzone, outKzone, outKzone, inKzone),
-    y = c(botKzone, topKzone, topKzone, botKzone, botKzone))
+#plotting heat map for HR in seattle
+heatmapSEA <- ggplot(SEA, aes(x = plate_x, y = plate_z))+
+  stat_density2d(geom = "tile", aes(fill = after_stat(density)), contour = FALSE)+
+  custom_color_scale+
+  geom_polygon(data = sz, aes(x, z), color = 'black', fill = NA)+
+  theme_minimal()+
+ xlab("Position on Home Plate")+
+  ylab("Feet Above Ground")+
+  labs(title = "Heatmap of HR at T-Mobile")
 
-x <- seq(-1.5, 1.5, length.out = 50)
-y <- seq(.5, 5, length.out = 50)
-data.predict <- data.frame(X = c(outer(x,y * 0 + 1)),
-                           Z = c(outer(x * 0 + 1, y)))
-lp <- predict(fit, data.predict)
-data.predict$Probability <- exp(lp) / (1 + exp(lp))
-
-ggplot(kZone, aes(x = x, y = y))+
-  geom_tile(data = SEA, aes(x = plate_x, y = plate_z, fill = release_speed))+
-  scale_fill_distiller(palette = "Spectral")+
-  geom_path(lwd = .5, col = "black")+
-  coord_fixed()
-
+ggarrange(SEAstrikezone, heatmapSEA)
