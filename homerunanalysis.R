@@ -35,26 +35,27 @@ SEAstrikezone <- ggplot()+
   geom_path(data = sz, aes(x = x, y = z))+
   coord_equal()+
   labs(title = "HR at T-Mobile by Pitch Type")+
-  xlab("Width of Home Plate")+
+  xlab(NULL)+
   ylab("Feet Above the Ground")+
-  geom_point(data = SEA, aes(x = plate_x,y = plate_z, color=pitch_name))+
-  scale_size(range = c(0.01, 3))
+  geom_point(data = SEA, aes(x = plate_x,y = plate_z, color=pitch_name),
+             na.rm = TRUE)+
+  theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 
-#creating custom color scale
-custom_color_scale <- scale_fill_gradientn(
-  colors = c("#FBFBF9", "#0A1172","#3944BC", "#FF2800"),
-  values = c(0, 0.3, .5, 1),
-  guide = "colorbar"
-)
 
 #plotting heat map for HR in seattle
-heatmapSEA <- ggplot(SEA, aes(x = plate_x, y = plate_z))+
-  stat_density2d(geom = "tile", aes(fill = after_stat(density)), contour = FALSE)+
-  custom_color_scale+
-  geom_polygon(data = sz, aes(x, z), color = 'black', fill = NA)+
-  theme_minimal()+
- xlab("Position on Home Plate")+
+heatmapSEA <- ggplot(SEA, aes(plate_x, plate_z))+
+  stat_density_2d_filled(geom = "density_2d_filled", contour = TRUE, 
+                         contour_var = "density", 
+                         na.rm = TRUE, show.legend = TRUE)+
+  geom_path(data = sz, aes(x, z), color = 'white')+
+  xlab(NULL)+
   ylab("Feet Above Ground")+
-  labs(title = "Heatmap of HR at T-Mobile")
-
+  labs(title = "Home Run Density in Strikezone at T-Mobile", 
+       fill = "Density Value")+
+  theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
+  
 ggarrange(SEAstrikezone, heatmapSEA)
+
+
+
+
