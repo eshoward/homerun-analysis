@@ -1,8 +1,37 @@
 ---
-title: "T-Mobile Homeruns"
+title: "Outlier Home Runs: Outside the Sweet Spot"
 author: "Evan Howard"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
+---
+
+This project is focusing on all home runs that were hit between the 2015 season
+and April 9,2023. It is intended to focus on home runs within different ballparks
+to see what constitutes an "outlier" home run. I worked on this project with
+[Annabel Judd](https://www.linkedin.com/in/annabel-judd-681004156/) and 
+[Julian Coleman](https://www.linkedin.com/in/juliantcoleman/).
+The data collected was from [Basbeall Savant](https://baseballsavant.mlb.com/statcast_search).
+
+When collecting the data we wanted to view all home runs at certain ballparks.
+At Baseball Savant we selected Batter as Player Type, Statcast for Season, 
+Home Run for PA Result. For Season Type we chose regular season, playoffs, wildcard,
+division series, league championship, world series, and all star. Since we wanted
+to collect all Home Run data for ballparks we chose to include the all star games.
+
+Once we obtained this data we chose to keep only metrics that we thought might be
+useful to our analysis. We kept: pitch type, game date, release speed, player name, 
+batter id, pitcher id, events, zone, game type, stand, p throws, home team, 
+away team, bb type, pfx x, pfx z, plate x, plate z, hc x, hcy, all v 0, all a, 
+sz top, sz bot, hit distance, launch speed, launch angle, effective speed, 
+release spin rate, release extension, game pk, estimated ba using speed anlge, 
+estimated woba using speed anlge, launch speed angle, pitch name, spin axis, 
+delta home win exp, and delta run exp. 
+Definitions for all column names can be found at [Statcase Search CSV Documention](https://baseballsavant.mlb.com/csv-docs).
+
+In the following strike zone and heatmap plots below, remember that the view is
+from the Catcher's perspective. A Right handed hitter would be to the left of the
+strike zone, and a Left handed hitter would be to the right.
+
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +43,7 @@ library(ggpubr)
 library(formattable)
 library(reshape)
 
-SEA <- read.csv("SEAballparkHR.csv")
+ballpark <- ballpark[colSums(!is.na(ballpark)) > 0]
 ```
 
 
@@ -24,44 +53,52 @@ z <- c(1.5, 1.5, 3.5, 3.5, 1.5)
 sz <- tibble(x, z)
 
 #visualizing pitch spray chart of all HR @ SEA with pitch_name
-SEAstrikezone <- ggplot()+
-  geom_path(data = sz, aes(x = x, y = z))+
+ballpark_strikezone <- ggplot()+
   coord_equal()+
-  labs(title = "HR at T-Mobile by Pitch Type")+
+  labs(title = "Home Runs by Pitch Type")+
   xlab(NULL)+
   ylab("Feet Above the Ground")+
-  geom_point(data = SEA, aes(x = plate_x,y = plate_z, color=pitch_name),
+  geom_point(data = ballpark, aes(x = plate_x,y = plate_z, color=pitch_name),
              na.rm = TRUE)+
+  geom_path(data = sz, aes(x = x, y = z))+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 
-SEAstrikezone
+ballpark_strikezone
 ```
 
-Above is the strikezone plot of all the homeruns from our data file by pitch type.
+Above is a strike zone plot of all Home Runs by pitch type. It is apparent
+that there is a slight shift to the left of the strike zone for all pitches.
+This shift to the left is towards Right handed hitters and would put the majority
+of pitches right in the sweet spot for those hitters. There does seem to be a 
+smattering of Home Runs that are well outside of the strike zone. Again, those that
+are outside the strike zone tend to be on the inside of a Right handed hitter.
 
 
 ```{r}
-
 #plotting heat map for HR in seattle
-heatmapSEA <- ggplot(SEA, aes(plate_x, plate_z))+
+heatmap_ballpark <- ggplot(ballpark, aes(plate_x, plate_z))+
   stat_density_2d_filled(geom = "density_2d_filled", contour = TRUE, 
                          contour_var = "density", 
                          na.rm = TRUE, show.legend = TRUE)+
   geom_path(data = sz, aes(x, z), color = 'white')+
   xlab(NULL)+
   ylab("Feet Above Ground")+
-  labs(title = "Home Run Density in Strikezone at T-Mobile", 
+  labs(title = "Home Run Density in Strikezone", 
        fill = "Density Value")+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 
-heatmapSEA
+heatmap_ballpark
 ```
 
-Above is the heatmap to see the density of HR in relation to where they're located
-in the strikezone at T-Mobile.
+The contour heatmap above shows that the greatest density of Home Runs was
+around the middle part of the plate as well as middle height of the strike zone.
+Again, we see the slightest shift to the left of home plate, as well as the 
+slightest shift under the middle point of the height of the strike zone. 
+Interestingly, we see a very low density of Home Runs that would be inside to a 
+Left handed hitter.
 
 ```{r}
-plot_data <- ggplot_build(heatmapSEA)$data[[1]]
+plot_data <- ggplot_build(heatmap_ballpark)$data[[1]]
 
 #finding HR that have are in the density <= 0.1
 filtered_events <- plot_data %>% filter(piece == 1) %>%
@@ -70,22 +107,25 @@ filtered_events <- plot_data %>% filter(piece == 1) %>%
     y= round(y,2))
 
 #finding the events whose density <= 0.1 based off pitch location in SEA table
-table_data <- SEA %>%
+table_data <- ballpark %>%
   filter(plate_x %in% filtered_events$x & plate_z %in% filtered_events$y)
 
 #viewing events whose density is <= .1
 ggplot()+
-  geom_path(data = sz, aes(x = x, y = z))+
   coord_equal()+
-  labs(title = "HR at T-Mobile by Pitch Type")+
+  labs(title = "Home Runs by Pitch Type Where Density is <= 0.1")+
   xlab(NULL)+
   ylab("Feet Above the Ground")+
   geom_point(data = table_data, aes(x = plate_x,y = plate_z, color=pitch_name),
              na.rm = TRUE)+
+  geom_path(data = sz, aes(x = x, y = z))+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 ```
-Above we are viewing the pitches that were hit for home runs at T-Mobile park
-whose density value was less than or equal to 0.1.
+Here we see a strike zone that is much similar to the first one. Again, the density
+of Home Runs for every ball park seems to be on the inside portion of the plate
+to Right handed hitters. Of course there is every pitch imaginable including an
+Eephus and Kuckleball.
+
 
 ```{r}
 ggplot(table_data, aes(x = reorder(pitch_name, -table(pitch_name)[pitch_name]),
@@ -100,9 +140,16 @@ ggplot(table_data, aes(x = reorder(pitch_name, -table(pitch_name)[pitch_name]),
   guides(fill = 'none')
 ```
 
+It should be no surprise that the pitch with the most amount of Home Runs whose
+density is less than or equal to 0.1 is a 4-Seam Fastball. This pitch, by and large, 
+gets absolutely demolished. From there we see quite a dramatic drop off of the
+types of pitches that were hit for Home Runs. If the situation is a Right handed
+pitcher vs a Right handed hitter the down and in movement of a sinker and the down
+and away movement of slider makes sense that they wouldn't be hit for as many 
+Home Runs. However, with the increased adaptation of these two pitches in pitchers'
+arsenals I believe that we will start to see an uptick in the amount of Home Runs
+hit off these pitches.
 
-Above are the count of pitch types that were hit for HR at T-Mobile park
-whose density value was less than or equal to 0.1.
 
 ```{r}
 #viewing barrel contact of HR whose density was <= 0.1
@@ -110,7 +157,7 @@ ggplot(table_data, aes(x = factor(launch_speed_angle)))+
   geom_bar(na.rm = TRUE)+
   scale_x_discrete(labels = c("Under", "Flare/Burner", "Solid Contact", "Barrel"),
                    na.translate = FALSE)+
-  xlab("Categorization Barrel Contact")+
+  xlab("Barrel Contact")+
   ylab("Count") +
   ggtitle("Categorization of Barrel Contact by Count")+
   theme(text = element_text(family = 'serif', size = 14), 
@@ -118,9 +165,62 @@ ggplot(table_data, aes(x = factor(launch_speed_angle)))+
 
 ```
 
+Baseball Savant classifies the column `launch_speed_angle` as, "Launch speed/angle zone
+based on launch angle and exit velocity." The categorization of this is: 
+1) Weak, 2) Topped, 3) Under, 4) Flare/Burner, 5) Solid Contact, and 6) Barrel.
+From the above bar chart we see that most Home Runs whose density value is less
+than or equal to 0.1 is barreled. After this, it is a very steep drop off to 
+solid contact. Interestingly, the category under has more Home Runs than flare/
+burner. 
 
-Above we are viewing the barrel contact of HR at T-Mobile park whose density
-value was less than or equal to 0.1.
+For those Home Runs whose density value is less than or equal to 0.1 and whose
+launch speed angle is categorized as barreled (or 6) we find that the median launch 
+speed is 104.8, the median launch angle is 27 degrees, and the median distance is
+405 feet. 
+
+```{r}
+#filtering out for barreled balls
+barreled <- table_data %>%
+  filter(launch_speed_angle == 6)
+
+mediandist_bypitch <- barreled %>%
+  group_by(pitch_name) %>%
+  summarise(median_distance = median(hit_distance_sc, na.rm = TRUE))
+
+#dropping blank row, which is same as 'other'
+mediandist_bypitch <- mediandist_bypitch %>% slice(-1)
+
+median_scatter <- ggplot(mediandist_bypitch, aes(x = pitch_name,y = median_distance))+
+  geom_point()+
+  geom_text(aes(label = median_distance), vjust = -0.8, size = 3)+
+  xlab("Pitch Type")+
+  ylab("Median Distance Hit")+
+  ggtitle("Median Distance Hit by Pitch Type")+
+  theme(text = element_text(family = 'serif', size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_blank())+
+  guides(fill = 'none')
+
+median_scatter
+```
+
+Here we are viewing the median distance by pitch type of Home Runs whose density
+value was less than or equal to 0.1 and whose `launch_speed_angle` was 6, or 
+barreled. Slurve and sweeper pitches have the highest median distance at 412 feet. 
+This could be because these pitches aren't thrown as frequently as other pitchers
+and these pitches might often miss in the middle of the plate. Sinkers and sliders
+both have higher median distance than a 4-Seam Fastball. 
+
+---
+
+##Future Research
+
+For future research I would like to do a more in depth analysis of all Home Runs
+that were outside the strike zone as well as an analysis of Home Runs whose
+barrel contact was classified as under and flare/burner. I would also like to do
+an analysis on the Home Runs that were hit off Cutters and Split-Fingers to see if
+pitchers who utilized these pitches had lower Home Run rates than those pitchers 
+that do not have them in their arsenal.
 
 
 
