@@ -6,8 +6,6 @@ library(tidyverse)
 library(baseballr)
 library(dplyr)
 library(ggpubr)
-library(formattable)
-library(reshape)
 
 #loading csv
 ballpark <- read.csv("ballparkHR.csv")
@@ -54,21 +52,20 @@ heatmapSEA <- ggplot(SEA, aes(plate_x, plate_z))+
        fill = "Density Value")+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
   
-install.packages("ggplot2")
-install.packages("gridExtra")
-library(ggplot2)
-library(gridExtra)
 
-#finding HR that have are in the density <= .2
 plot_data <- ggplot_build(heatmapSEA)$data[[1]]
-filtered_events <- plot_data %>% filter(level_high <= 0.2) %>%
+
+#finding HR that have are in the density <= 0.1
+filtered_events <- plot_data %>% filter(piece == 1) %>%
   mutate(
     x= round(x,2),
     y= round(y,2))
 
+#finding the events whose density <= 0.1 based off pitch location in SEA table
 table_data <- SEA %>%
-  filter(plate_x %in% filtered_events$x, plate_z %in% filtered_events$y)
+  filter(plate_x %in% filtered_events$x & plate_z %in% filtered_events$y)
 
+#viewing events whose density is <= .1
 ggplot()+
   geom_path(data = sz, aes(x = x, y = z))+
   coord_equal()+
@@ -78,3 +75,16 @@ ggplot()+
   geom_point(data = table_data, aes(x = plate_x,y = plate_z, color=pitch_name),
              na.rm = TRUE)+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
+
+#barchart of pitch types that were hit for HR whose density was <= 0.1
+ggplot(table_data, aes(x = reorder(pitch_name, -table(pitch_name)[pitch_name]),
+                       fill = pitch_name))+
+  geom_bar()+
+  xlab("Pitch Name")+
+  ylab("Count") +
+  ggtitle("Count of Pitches Hit For HR Whose Density <= 0.1")+
+  theme(text = element_text(family = 'serif', size = 18),
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_blank())+
+  guides(fill = 'none')
+
