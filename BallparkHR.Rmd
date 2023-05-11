@@ -43,6 +43,7 @@ library(ggpubr)
 library(formattable)
 library(reshape)
 
+ballpark <- read.csv("ballparkHR.csv")
 ballpark <- ballpark[colSums(!is.na(ballpark)) > 0]
 ```
 
