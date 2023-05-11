@@ -1,7 +1,7 @@
 ---
 title: "T-Mobile Homeruns"
 author: "Evan Howard"
-date: "2023-05-05"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
 
@@ -18,8 +18,7 @@ SEA <- read.csv("SEAballparkHR.csv")
 ```
 
 
-```{r}
-summary(cars)
+```{r, echo = FALSE}
 x <- c(-.8, 1.2, 1.2, -.8, -.8)
 z <- c(1.5, 1.5, 3.5, 3.5, 1.5)
 sz <- tibble(x, z)
@@ -60,3 +59,70 @@ heatmapSEA
 
 Above is the heatmap to see the density of HR in relation to where they're located
 in the strikezone at T-Mobile.
+
+```{r}
+plot_data <- ggplot_build(heatmapSEA)$data[[1]]
+
+#finding HR that have are in the density <= 0.1
+filtered_events <- plot_data %>% filter(piece == 1) %>%
+  mutate(
+    x= round(x,2),
+    y= round(y,2))
+
+#finding the events whose density <= 0.1 based off pitch location in SEA table
+table_data <- SEA %>%
+  filter(plate_x %in% filtered_events$x & plate_z %in% filtered_events$y)
+
+#viewing events whose density is <= .1
+ggplot()+
+  geom_path(data = sz, aes(x = x, y = z))+
+  coord_equal()+
+  labs(title = "HR at T-Mobile by Pitch Type")+
+  xlab(NULL)+
+  ylab("Feet Above the Ground")+
+  geom_point(data = table_data, aes(x = plate_x,y = plate_z, color=pitch_name),
+             na.rm = TRUE)+
+  theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
+```
+Above we are viewing the pitches that were hit for home runs at T-Mobile park
+whose density value was less than or equal to 0.1.
+
+```{r}
+ggplot(table_data, aes(x = reorder(pitch_name, -table(pitch_name)[pitch_name]),
+                       fill = pitch_name))+
+  geom_bar()+
+  xlab("Pitch Name")+
+  ylab("Count") +
+  ggtitle("Count of Pitches Hit For HR Whose Density <= 0.1")+
+  theme(text = element_text(family = 'serif', size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_blank())+
+  guides(fill = 'none')
+```
+
+
+Above are the count of pitch types that were hit for HR at T-Mobile park
+whose density value was less than or equal to 0.1.
+
+```{r}
+#viewing barrel contact of HR whose density was <= 0.1
+ggplot(table_data, aes(x = factor(launch_speed_angle)))+
+  geom_bar(na.rm = TRUE)+
+  scale_x_discrete(labels = c("Under", "Flare/Burner", "Solid Contact", "Barrel"),
+                   na.translate = FALSE)+
+  xlab("Categorization Barrel Contact")+
+  ylab("Count") +
+  ggtitle("Categorization of Barrel Contact by Count")+
+  theme(text = element_text(family = 'serif', size = 14), 
+        panel.background = element_blank())
+
+```
+
+
+Above we are viewing the barrel contact of HR at T-Mobile park whose density
+value was less than or equal to 0.1.
+
+
+
+
+
