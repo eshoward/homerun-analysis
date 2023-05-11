@@ -3,6 +3,8 @@ title: "Outlier Home Runs: Outside the Sweet Spot"
 author: "Evan Howard"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
+header-includes:
+  - \usepackage{hyperref}
 ---
 
 This project is focusing on all home runs that were hit between the 2015 season
@@ -122,6 +124,7 @@ ggplot()+
   geom_path(data = sz, aes(x = x, y = z))+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 ```
+
 Here we see a strike zone that is much similar to the first one. Again, the density
 of Home Runs for every ball park seems to be on the inside portion of the plate
 to Right handed hitters. Of course there is every pitch imaginable including an
@@ -214,7 +217,7 @@ both have higher median distance than a 4-Seam Fastball.
 
 ---
 
-##Future Research
+# Future Research
 
 For future research I would like to do a more in depth analysis of all Home Runs
 that were outside the strike zone as well as an analysis of Home Runs whose
