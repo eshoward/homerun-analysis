@@ -83,8 +83,19 @@ ggplot(table_data, aes(x = reorder(pitch_name, -table(pitch_name)[pitch_name]),
   xlab("Pitch Name")+
   ylab("Count") +
   ggtitle("Count of Pitches Hit For HR Whose Density <= 0.1")+
-  theme(text = element_text(family = 'serif', size = 18),
+  theme(text = element_text(family = 'serif', size = 14),
         axis.text.x = element_text(angle = 45, hjust = 1), 
         panel.background = element_blank())+
   guides(fill = 'none')
+
+#viewing barrel contact of HR whose density was <= 0.1
+ggplot(table_data, aes(x = factor(launch_speed_angle)))+
+  geom_bar(na.rm = TRUE)+
+  scale_x_discrete(labels = c("Under", "Flare/Burner", "Solid Contact", "Barrel"),
+                   na.translate = FALSE)+
+  xlab("Categorization Barrel Contact")+
+  ylab("Count") +
+  ggtitle("Categorization of Barrel Contact by Count")+
+  theme(text = element_text(family = 'serif', size = 14), 
+        panel.background = element_blank())
 
