@@ -54,8 +54,27 @@ heatmapSEA <- ggplot(SEA, aes(plate_x, plate_z))+
        fill = "Density Value")+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
   
-ggarrange(SEAstrikezone, heatmapSEA)
+install.packages("ggplot2")
+install.packages("gridExtra")
+library(ggplot2)
+library(gridExtra)
 
+#finding HR that have are in the density <= .2
+plot_data <- ggplot_build(heatmapSEA)$data[[1]]
+filtered_events <- plot_data %>% filter(level_high <= 0.2) %>%
+  mutate(
+    x= round(x,2),
+    y= round(y,2))
 
+table_data <- SEA %>%
+  filter(plate_x %in% filtered_events$x, plate_z %in% filtered_events$y)
 
-
+ggplot()+
+  geom_path(data = sz, aes(x = x, y = z))+
+  coord_equal()+
+  labs(title = "HR at T-Mobile by Pitch Type")+
+  xlab(NULL)+
+  ylab("Feet Above the Ground")+
+  geom_point(data = table_data, aes(x = plate_x,y = plate_z, color=pitch_name),
+             na.rm = TRUE)+
+  theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
