@@ -107,3 +107,30 @@ barreled <- table_data %>%
 median(ballpark$launch_speed, na.rm=TRUE)
 median(ballpark$launch_angle, na.rm = TRUE)
 median(ballpark$hit_distance_sc, na.rm = TRUE)
+
+#finding median distance of pitch types
+mediandist_bypitch <- barreled %>%
+  group_by(pitch_name) %>%
+  summarise(median_distance = median(hit_distance_sc, na.rm = TRUE))
+
+#dropping blank row, which is same as 'other'
+mediandist_bypitch <- mediandist_bypitch %>% slice(-1)
+
+ggplot(mediandist_bypitch, aes(x = pitch_name,y = median_distance))+
+  geom_point()+
+  geom_text(aes(label = median_distance), vjust = -0.8, size = 3)+
+  xlab("Pitch Type")+
+  ylab("Median Distance Hit")+
+  ggtitle("Median Distance Hit by Pitch Type")+
+  theme(text = element_text(family = 'serif', size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        panel.background = element_blank())+
+  guides(fill = 'none')
+
+
+
+
+
+
+
+
