@@ -30,13 +30,13 @@ sz <- tibble(x, z)
 
 #visualizing pitch spray chart of all HR with pitch_name
 ballpark_strikezone <- ggplot()+
-  geom_path(data = sz, aes(x = x, y = z))+
   coord_equal()+
   labs(title = "Home Runs by Pitch Type")+
   xlab(NULL)+
   ylab("Feet Above the Ground")+
   geom_point(data = ballpark, aes(x = plate_x,y = plate_z, color=pitch_name),
              na.rm = TRUE)+
+  geom_path(data = sz, aes(x = x, y = z))+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 
 
@@ -67,13 +67,13 @@ table_data <- ballpark %>%
 
 #viewing events whose density is <= .1
 ggplot()+
-  geom_path(data = sz, aes(x = x, y = z))+
   coord_equal()+
   labs(title = "Home Runs by Pitch Type Where Density is <= 0.1")+
   xlab(NULL)+
   ylab("Feet Above the Ground")+
   geom_point(data = table_data, aes(x = plate_x,y = plate_z, color=pitch_name),
              na.rm = TRUE)+
+  geom_path(data = sz, aes(x = x, y = z))+
   theme_pubr(base_size = 12, base_family = 'serif', legend = "right")
 
 #barchart of pitch types that were hit for HR whose density was <= 0.1
@@ -104,9 +104,9 @@ barreled <- table_data %>%
   filter(launch_speed_angle == 6)
 
 #finding median values for launch speed, angle, and hit distance
-median(ballpark$launch_speed, na.rm=TRUE)
-median(ballpark$launch_angle, na.rm = TRUE)
-median(ballpark$hit_distance_sc, na.rm = TRUE)
+median(barreled$launch_speed, na.rm=TRUE)
+median(barreled$launch_angle, na.rm = TRUE)
+median(barreled$hit_distance_sc, na.rm = TRUE)
 
 #finding median distance of pitch types
 mediandist_bypitch <- barreled %>%
